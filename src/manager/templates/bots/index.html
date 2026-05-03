@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🤖 Dashboard</h2>
+    <div class="btn-group">
+        <button onclick="globalAction('sync')" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-repeat"></i> Sync All
+        </button>
+        <button onclick="globalAction('prune')" class="btn btn-outline-warning">
+            <i class="bi bi-trash"></i> Prune Images
+        </button>
+        <a href="/bots/new" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> + Create New Bot
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% for bot in bots %}
+    <div class="col-md-4 mb-4">
+        {% set is_running = stats[bot.id]['status'] == 'running' %}
+        
+        <div class="card shadow-sm border-{% if is_running %}success{% else %}secondary{% endif %}" id="bot-{{ bot.id }}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    {{ bot.name or "Unnamed Bot" }}
+                    {% if bot.username %}<small class="text-muted">(@{{ bot.username }})</small>{% endif %}
+                </h6>
+                <span class="badge {% if bot.image_type.value == 'media' %}bg-warning{% else %}bg-info{% endif %} text-dark">
+                    {{ bot.image_type.value }}
+                </span>
+            </div>
+            
+            <div class="card-body">
+                <div class="small mb-3">
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span class="text-muted">Docker Status:</span>
+                        <span class="badge {% if is_running %}bg-success{% else %}bg-danger{% endif %} status-label">
+                            {{ stats[bot.id]['status'] | upper }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span class="text-muted">Desired State:</span>
+                        <b>{% if bot.is_active %}Enabled{% else %}Disabled{% endif %}</b>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span class="text-muted">CPU:</span>
+                        <b class="cpu-label">{{ stats[bot.id]['cpu'] }}%</b>
+                    </div>
+                    <div class="d-flex justify-content-between py-1">
+                        <span class="text-muted">RAM:</span>
+                        <b class="ram-label">{{ stats[bot.id]['memory'] }}MB / {{ bot.mem_limit }}MB</b>
+                    </div>
+                </div>
+
+                <div class="btn-group w-100">
+                    {% if is_running %}
+                        <button class="btn btn-outline-danger" onclick="control('{{ bot.id }}', 'stop')" title="Stop Bot">
+                            <i class="bi bi-stop-circle-fill"></i> Stop
+                        </button>
+                    {% else %}
+                        <button class="btn btn-outline-success" onclick="control('{{ bot.id }}', 'start')" title="Start Bot">
+                            <i class="bi bi-play-circle-fill"></i> Start
+                        </button>
+                    {% endif %}
+                    
+                    <a href="/bot/{{ bot.id }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-gear"></i> Config
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function control(botId, action) {
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    fetch(`/bots/${botId}/${action}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); 
+            } else {
+                alert('Error: ' + data.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+}
+
+async function globalAction(action) {
+    if (!confirm(`Are you sure you want to ${action}?`)) return;
+    const res = await fetch(`/${action}`, { method: 'POST' });
+    const data = await res.json();
+    alert(data.message);
+    location.reload();
+}
+
+</script>
+{% endblock %}

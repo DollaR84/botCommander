@@ -1,0 +1,142 @@
+x-default-logging: &default-logging
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  db:
+    <<: *default-logging
+    platform: ${PLATFORM:-linux/amd64}
+    image: postgres:17.5-alpine
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bot_network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME}"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DB_HOST: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DATABASE_URL: postgres://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/*
+      LISTEN_PORT: ${PGBOUNCER_PORT}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 500
+      DEFAULT_POOL_SIZE: 20
+      AUTH_TYPE: trust
+    networks:
+      - bot_network
+    volumes:
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "0.0.0.0", "${PGBOUNCER_PORT}"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+
+  redis:
+    platform: ${PLATFORM:-linux/amd64}
+    image: redis:alpine
+    env_file: .env
+    volumes:
+      - redis_data:/data
+    networks:
+      - bot_network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+
+  bot-base-image:
+    platform: ${PLATFORM:-linux/amd64}
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+      target: base
+    image: bot-base:latest
+    entrypoint: ["echo", "Base image built"]
+    restart: "no"
+
+  bot-media-image:
+    platform: ${PLATFORM:-linux/amd64}
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+      target: media
+    image: bot-media:latest
+    depends_on:
+      - bot-base-image
+    entrypoint: ["echo", "Media image built"]
+    restart: "no"
+
+  manager:
+    <<: *default-logging
+    platform: ${PLATFORM:-linux/amd64}
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+      target: manager
+    image: bot-commander-manager
+    container_name: bot-manager
+    env_file: .env
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000", "--workers", "1", "--interface", "wsgi"]
+    environment:
+      - PYTHONOPTIMIZE=1
+      - DEBUG=False
+      - PYTHONPATH=/app:/app/shared
+      - REDIS_DB_NUM=0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/manager/migrations/versions:/app/migrations/versions
+      - ./shared_downloads:/app/static/downloads
+      - ./sessions:/app/sessions
+      - bots_data:/app/bots
+    networks:
+      - bot_network
+    labels:
+      caddy: ${DOCKER_DOMAIN}
+      caddy.reverse_proxy: "{{upstreams 5000}}"
+    user: "1000:1000"
+    depends_on:
+      db:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      bot-media-image:
+        condition: service_completed_successfully
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+networks:
+  bot_network:
+    driver: bridge
+    name: bot_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  bots_data:

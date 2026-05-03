@@ -1,0 +1,26 @@
+services:
+  manager:
+    ports: []
+
+  caddy:
+    platform: ${PLATFORM:-linux/amd64}
+    image: lucaslorentz/caddy-docker-proxy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - CADDY_INGRESS_NETWORKS=bot_network
+    networks:
+      - bot_network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      manager:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">main</a></li>
+    <li class="breadcrumb-item active">New Bot</li>
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">🚀 Register New Bot</div>
+            <div class="card-body">
+                <form action="/" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Git URL</label>
+                        <input type="text" class="form-control" name="url" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Git branch</label>
+                        <input type="text" class="form-control" name="branch" value="main" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Telegram Bot Token</label>
+                        <input type="password" class="form-control" name="token" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Internal Name</label>
+                            <input type="text" class="form-control" name="bot_name" placeholder="My Bot">
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="need_db" id="need_db" checked>
+                        <label class="form-check-label" for="need_db"><b>Need database</b></label>
+                    </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Image Type</label>
+                            <select class="form-select" name="image_type">
+                                <option value="base">Base (python)</option>
+                                <option value="media">Media (FFmpeg)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col">
+                            <label class="form-label small">RAM Limit (MB)</label>
+                            <input type="number" class="form-control" name="mem_limit" value="64">
+                        </div>
+                        <div class="col">
+                            <label class="form-label small">CPU Quota (%)</label>
+                            <input type="number" class="form-control" name="cpu_quota" value="20">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">Create & Initialize</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
