@@ -38,6 +38,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
   libpq5 \
   curl \
+  postgresql-client \
   git \
   ca-certificates \
   && apt-get clean \
@@ -52,9 +53,6 @@ RUN mkdir -p /app/static/downloads /app/sessions /app/migrations/versions && \
 
 # Copy the installed libraries from the builder to the new user’s folder
 COPY --from=builder --chown=appuser:appgroup /root/.local /home/appuser/.local
-
-# copy shared source code
-COPY --chown=appuser:appgroup shared/ ./shared/
 
 # Copy the launch script
 COPY --chown=appuser:appgroup entrypoint.sh /app/

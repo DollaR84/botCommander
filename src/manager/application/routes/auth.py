@@ -19,7 +19,7 @@ async def login(auth: FromDishka[AuthManager]) -> ResponseReturnValue:
 
         if username and password:
             if auth.login(username, password):
-                return redirect(url_for("dashboard"))
+                return redirect(url_for("bots.manager"))
             flash("Invalid login or password")
         else:
             flash("Both fields are required")

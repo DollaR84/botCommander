@@ -176,6 +176,11 @@ async def bot_runner(
     return jsonify({"success": status})
 
 
+@bp.route("/new", methods=["GET"])
+async def new() -> ResponseReturnValue:
+    return render_template("bots/new.html")
+
+
 @bp.route("/<action>", methods=["POST"])
 @login_required
 @inject

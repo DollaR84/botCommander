@@ -3,7 +3,7 @@ from application import interfaces
 
 from db import domain
 
-from shared.db import Mapper
+from barsik.db import Mapper
 
 
 class UpdateBot:

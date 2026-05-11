@@ -5,7 +5,7 @@ from application import interfaces
 
 from services.types import ImageType
 
-from shared.db import Mapper
+from barsik.db import Mapper
 
 
 class BaseGetBot:

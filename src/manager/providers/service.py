@@ -14,8 +14,8 @@ class ServiceProvider(Provider):
     config = from_context(provides=Config, scope=Scope.APP)
 
     @provide(scope=Scope.APP)
-    async def get_env_builder(self) -> EnvBuilder:
-        return EnvBuilder()
+    async def get_env_builder(self, config: Config) -> EnvBuilder:
+        return EnvBuilder(config)
 
     @provide(scope=Scope.APP)
     async def get_docker_builder(self, config: Config, env_builder: EnvBuilder) -> DockerConfigBuilder:

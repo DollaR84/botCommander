@@ -9,13 +9,14 @@ from alembic.config import Config
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
+from barsik.config.adapters import PostgresConfig
+
 from application import dto
-from shared.config import DBConfig
 
 
 class AdminDbConnector:
 
-    def __init__(self, config: DBConfig, bots_dir: Path):
+    def __init__(self, config: PostgresConfig, bots_dir: Path):
         self.config = config
         self.bots_dir = bots_dir
 

@@ -10,7 +10,7 @@
         <button onclick="globalAction('prune')" class="btn btn-outline-warning">
             <i class="bi bi-trash"></i> Prune Images
         </button>
-        <a href="/bots/new" class="btn btn-primary">
+        <a href="{{ url_for('bots.new') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> + Create New Bot
         </a>
     </div>
@@ -65,7 +65,7 @@
                         </button>
                     {% endif %}
                     
-                    <a href="/bot/{{ bot.id }}" class="btn btn-outline-secondary">
+                    <a href="{{ url_for('bots', bot_id=bot.id) }}" class="btn btn-outline-secondary">
                         <i class="bi bi-gear"></i> Config
                     </a>
                 </div>

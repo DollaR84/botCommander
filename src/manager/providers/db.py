@@ -7,6 +7,8 @@ from config import Config
 from db import gateways
 from db.admin import AdminDbConnector
 
+from barsik.config.adapters import PostgresConfig
+
 
 class DBProvider(Provider):
 
@@ -14,6 +16,8 @@ class DBProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     async def get_admin_db_connector(self, config: Config) -> AdminDbConnector:
+        if not isinstance(config.db, PostgresConfig):
+            raise RuntimeError("config for admin DB need be PostgresConfig")
         return AdminDbConnector(config.db, config.docker.bots_dir)
 
     @provide(scope=Scope.REQUEST)

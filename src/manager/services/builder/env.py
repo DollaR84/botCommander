@@ -1,29 +1,38 @@
+from dataclasses import is_dataclass, fields
 from typing import Any
 
-from barsik.utils.cache import get_config
-from pydantic import BaseModel
+from barsik.config.adapters.base import BaseConfigAdapter
 
 from application import dto
-from shared.config import BaseBotConfig
+from config import Config
 
 
 class EnvBuilder:
 
-    def __init__(self) -> None:
-        _temp_config: BaseBotConfig = get_config(BaseBotConfig)
+    def __init__(self, config: Config):
+        self.config: Config = config
         self._data: dict[str, Any] = {}
 
-        def _walk(obj: BaseModel) -> None:
-            prefix = obj.model_config.get("env_prefix", "")
-            for field_name in obj.model_fields:
+        def _walk(obj: Any, _prefix: str) -> None:
+            for field in fields(obj):
+                field_name = field.name
                 value = getattr(obj, field_name)
-                if isinstance(value, BaseModel):
-                    _walk(value)
+
+                env_key = f"{_prefix}_{field_name}".upper()
+                if is_dataclass(value):
+                    _walk(value, _prefix)
                 else:
-                    env_key = f"{prefix}{field_name}".upper()
                     self._data[env_key] = str(value)
 
-        _walk(_temp_config)
+        for adapter_cls in BaseConfigAdapter.get_adapters():
+            prefix = adapter_cls.get_prefix()
+            section_name = adapter_cls.get_section_name()
+
+            section = getattr(self.config, section_name, None)
+            if section is None:
+                continue
+
+            _walk(section, prefix)
 
     @property
     def ext_data(self) -> dict[str, str]:
@@ -31,7 +40,6 @@ class EnvBuilder:
             "REDIS_DB_NUM": "1",
             "PYTHONOPTIMIZE": "1",
             "PYTHONUNBUFFERED": "1",
-            "PYTHONPATH": "/app:/app/shared",
         }
 
     @property

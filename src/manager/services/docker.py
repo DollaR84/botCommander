@@ -8,7 +8,7 @@ import aiodocker
 from flask import jsonify, Response
 
 from application import dto
-from config import DockerConfig
+from config.adapters import DockerConfig
 
 from .builder import DockerConfigBuilder
 from .git import GitService

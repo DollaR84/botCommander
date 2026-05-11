@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from barsik.db.models.base import Base
+from barsik.utils.cache import get_config
 
 from config import Config as Settings
 
@@ -17,8 +18,10 @@ from config import Config as Settings
 # access to the values within the .ini file in use.
 config = context.config
 
-settings = Settings()
-config.set_main_option("sqlalchemy.url", settings.db.direct_uri)
+settings = get_config(Settings)
+if settings.db is None:
+    raise RuntimeError("settings DB unset")
+config.set_main_option("sqlalchemy.url", settings.db.async_uri)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -76,7 +79,8 @@ async def run_async_migrations() -> None:
     """
 
     connect_args = {}
-    if settings.db.ssl:
+    ssl_arg = getattr(settings.db, "ssl")
+    if ssl_arg:
         ssl_context = ssl.create_default_context()
         connect_args["ssl"] = ssl_context
 

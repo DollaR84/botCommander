@@ -1,14 +1,15 @@
 import logging
 
+from asgiref.wsgi import WsgiToAsgi
+
 from barsik.utils.cache import get_config
-from flask import Flask
 
 from application import FlaskApp
 from config import Config
 from container import setup_container
 
 
-def get_app() -> Flask:
+def get_app() -> WsgiToAsgi:
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s  %(process)-7s %(module)-20s %(message)s',
@@ -19,7 +20,7 @@ def get_app() -> Flask:
 
     container = setup_container(config)
     _app.post_init(container)
-    return _app.app
+    return WsgiToAsgi(_app.app)
 
 
 app = get_app()

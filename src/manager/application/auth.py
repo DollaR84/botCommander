@@ -4,7 +4,7 @@ from flask import Flask
 from flask_login import LoginManager, UserMixin, login_user, logout_user
 from werkzeug.security import check_password_hash
 
-from config import AdminConfig
+from config.adapters import AdminConfig
 
 
 class AdminUser(UserMixin):

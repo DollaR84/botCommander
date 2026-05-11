@@ -1,7 +1,7 @@
 from typing import Any
 
 from application import dto
-from config import DockerConfig
+from config.adapters import DockerConfig
 
 from .env import EnvBuilder
 

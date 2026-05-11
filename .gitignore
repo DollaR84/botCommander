@@ -18,3 +18,4 @@ build_central.json
 *.local.txt
 *.backup
 *.sql
+userlist.txt

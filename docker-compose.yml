@@ -32,7 +32,7 @@ services:
       DB_HOST: ${POSTGRES_HOST}
       DB_PORT: ${POSTGRES_PORT}
       DATABASE_URL: postgres://${POSTGRES_USERNAME}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/*
-      LISTEN_PORT: ${PGBOUNCER_PORT}
+      LISTEN_PORT: ${POSTGRES_BOUNCER_PORT}
       POOL_MODE: transaction
       MAX_CLIENT_CONN: 500
       DEFAULT_POOL_SIZE: 20
@@ -41,11 +41,12 @@ services:
       - bot_network
     volumes:
       - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "nc", "-z", "0.0.0.0", "${PGBOUNCER_PORT}"]
+      test: ["CMD", "nc", "-z", "0.0.0.0", "${POSTGRES_BOUNCER_PORT}"]
       interval: 30s
       timeout: 30s
       retries: 5
@@ -97,11 +98,10 @@ services:
     image: bot-commander-manager
     container_name: bot-manager
     env_file: .env
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000", "--workers", "1", "--interface", "wsgi"]
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000", "--workers", "1"]
     environment:
       - PYTHONOPTIMIZE=1
       - DEBUG=False
-      - PYTHONPATH=/app:/app/shared
       - REDIS_DB_NUM=0
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

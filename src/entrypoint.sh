@@ -7,9 +7,9 @@ graceful_shutdown() {
 }
 trap graceful_shutdown SIGTERM SIGINT
 
-echo "Waiting for postgres..."
-until curl -s http://db:5432 || pg_isready -h db -U ${POSTGRES_USERNAME} > /dev/null 2>&1; do
-  echo "Postgres is unavailable - sleeping"
+echo "Waiting for database proxy (PgBouncer)..."
+until pg_isready -h pgbouncer -p 6432 -U "${POSTGRES_USERNAME}"; do
+  echo "Database is unavailable - sleeping"
   sleep 1
 done
 
